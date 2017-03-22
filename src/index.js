@@ -3,12 +3,23 @@ import jsx from "babel-plugin-syntax-jsx";
 const DEFAULT_GETTEXT = 'gettext';
 
 export default function ({ types: t }) {
+  function isTranslatableText(node) {
+    return t.isJSXText(node) && node.value.trim();
+  }
+
+  function translatedText(messageId) {
+    return t.callExpression(
+      t.identifier(DEFAULT_GETTEXT),
+      [ t.stringLiteral(messageId) ]
+    );
+  }
+
   const visitor = {
     JSXElement(path, stats) {
       let hasTranslatableText = false;
 
       for (const child of path.node.children) {
-        if (t.isJSXText(child) && child.value.trim()) {
+        if (isTranslatableText(child)) {
           hasTranslatableText = true;
           break;
         }
@@ -19,13 +30,8 @@ export default function ({ types: t }) {
       }
 
       const newChildren = path.node.children.map(child => {
-        if (t.isJSXText(child) && child.value.trim()) {
-          return t.jSXExpressionContainer(
-            t.callExpression(
-              t.identifier(DEFAULT_GETTEXT),
-              [ t.stringLiteral(child.value) ]
-            )
-          );
+        if (isTranslatableText(child)) {
+          return t.jSXExpressionContainer(translatedText(child.value));
         } else {
           return child;
         }
