@@ -7,10 +7,30 @@ export default function ({ types: t }) {
     return t.isJSXText(node) && node.value.trim();
   }
 
-  function translatedText(messageId) {
-    return t.callExpression(
+  function add(x, y, ...rest) {
+    return rest.reduce(
+      (left, right) => t.binaryExpression('+', left, right),
+      t.binaryExpression('+', x, y));
+  }
+
+  function translatedText(text) {
+    const [ , leadingWs, messageId, trailingWs ] =
+      /^(\s*)(.+?)(\s*)$/.exec(text);
+
+    const translation = t.callExpression(
       t.identifier(DEFAULT_GETTEXT),
       [ t.stringLiteral(messageId) ]
+    );
+
+    // Special case
+    if (!leadingWs && !trailingWs) {
+      return translation;
+    }
+
+    return add(
+      t.stringLiteral(leadingWs),
+      translation,
+      t.stringLiteral(trailingWs)
     );
   }
 
