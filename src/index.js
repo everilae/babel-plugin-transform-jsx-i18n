@@ -1,12 +1,20 @@
 import jsx from "babel-plugin-syntax-jsx";
 
+const GETTEXT = "gettext";
+const MESSAGE_IDENTIFIER = "Message"; 
+
 const I18N_MSG_ATTRIBUTE = "i18nMsg";
-const DEFAULT_GETTEXT = "gettext";
+const FORMAT_ATTRIBUTE = "format";
+const COMPONENT_ATTRIBUTE = "component";
+const EXPRESSIONS_ATTRIBUTE = "expressions";
+
 const TRANSLATABLE_ATTRIBUTES = [
   "alt",
   "placeholder",
   "title"
 ];
+
+export { default as Message } from './Message';
 
 export default function ({ types: t }) {
   function isTranslatableText(node) {
@@ -30,7 +38,7 @@ export default function ({ types: t }) {
       /^(\s*)(.+?)(\s*)$/.exec(text);
 
     const translation = t.callExpression(
-      t.identifier(DEFAULT_GETTEXT),
+      t.identifier(GETTEXT),
       [ t.stringLiteral(messageId) ]
     );
 
@@ -75,7 +83,7 @@ export default function ({ types: t }) {
     });
   }
 
-  function simpleTranslation(path, stats) {
+  function simpleTranslation(path, state) {
     const { node } = path;
 
     if (!hasTranslatableText(node)) {
@@ -115,34 +123,118 @@ export default function ({ types: t }) {
     return false;
   }
 
-  function complexTranslation(path, stats) {
-    console.warn("Complex translations note yet supported, ignoring i18nMsg attribute.");
+  function partitionAttributes(attributes) {
+    return attributes.reduce(
+      (acc, attr) => {
+        if (attr.name.name === I18N_MSG_ATTRIBUTE) {
+          acc[0] = attr;
+        } else {
+          acc[1].push(attr);
+        }
+        return acc;
+      },
+      [null, []]
+    );
+  }
+
+  function stripElement(node, attributes) {
+    return t.jSXElement(
+      t.jSXOpeningElement(
+        node.openingElement.name,
+        attributes || node.openingElement.attributes,
+        true
+      ),
+      null, [], true
+    );
+  }
+
+  function extract(node, placeholders, elements=[], expressions=[]) {
+    let format = "";
+
+    for (const child of node.children) {
+      if (t.isJSXText(child)) {
+        format += child.value;
+
+      }
+      else if (t.isJSXElement(child)) {
+        const idx = elements.length + 1;
+        const fmt = extract(child, placeholders, elements, expressions)[0];
+        elements.push(stripElement(child));
+        format += `[${idx}:${fmt}]`;
+      }
+      else if (t.isJSXExpressionContainer(child)) {
+        const p = placeholders[expressions.length];
+        expressions.push(child);
+        format += `{${p}}`;
+      }
+    }
+
+    return [ format, elements, expressions ];
+  }
+
+  function asList(node) {
+    if (t.isStringLiteral(node)) {
+      return node.value.trim() ? node.value.trim().split(/\s*,\s*/g) : [];
+    } else if (t.isJSXExpressionContainer(node) &&
+        t.isArrayExpression(node.expression)) {
+      // array of string literals expected
+      return node.expression.map(expr => expr.value);
+    } else {
+      throw new Error("Unexpected type");
+    }
+  }
+
+  function complexTranslation(path, state) {
     const { node } = path;
 
-    const newOpeningElement = t.jSXOpeningElement(
-      node.openingElement.name,
-      node.openingElement.attributes.filter(
-        attr => attr.name.name !== I18N_MSG_ATTRIBUTE
-      ),
-      node.openingElement.selfClosing
+    const [ i18nAttribute, filteredAttributes ] =
+      partitionAttributes(node.openingElement.attributes);
+
+    const newElement = stripElement(node, translateAttributes(filteredAttributes));
+
+    const msgId = () => t.jSXIdentifier(MESSAGE_IDENTIFIER);
+
+    const placeholders = asList(i18nAttribute.value);
+
+    const [ format, newChildren, expressions ] = extract(node, placeholders);
+
+    const expressionsObject = t.objectExpression(
+      placeholders.map((p, i) => t.objectProperty(
+        t.identifier(p), expressions[i].expression
+      ))
     );
+
+    const msgAttributes = [
+      t.jSXAttribute(
+        t.jSXIdentifier(FORMAT_ATTRIBUTE),
+        t.stringLiteral(format)
+      ),
+      t.jSXAttribute(
+        t.jSXIdentifier(COMPONENT_ATTRIBUTE),
+        t.jSXExpressionContainer(newElement)
+      ),
+      t.jSXAttribute(
+        t.jSXIdentifier(EXPRESSIONS_ATTRIBUTE),
+        t.jSXExpressionContainer(expressionsObject)
+      )
+    ];
 
     return path.replaceWith(
       t.jSXElement(
-        newOpeningElement,
-        node.closingElement,
-        node.children,
-        node.selfClosing
+        t.jSXOpeningElement(msgId(), msgAttributes, false),
+        t.jSXClosingElement(msgId()),
+        newChildren,
+        false
       )
     );
   }
 
   const visitor = {
-    JSXElement(path, stats) {
+    JSXElement(path, state) {
       if (hasI18nMsg(path.node)) {
-        return complexTranslation(path, stats);
+        return complexTranslation(path, state);
       } else {
-        return simpleTranslation(path, stats);
+        return simpleTranslation(path, state);
       }
     }
   };
