@@ -54,8 +54,8 @@ function parse(format) {
     }
   }
 
-  if (stack.length > 1) {
-    throw new Exception("Unclosed element(s)");
+  if (stack.length !== 1) {
+    throw new Exception("Unmatched opening and closing elements");
   }
 
   return stack[0];
@@ -85,7 +85,7 @@ class Message extends Component {
   render() {
     const { format, component, expressions, children, translator } = this.props;
     return mapComponents(
-      parse(format),
+      parse(translator(format)),
       [ component, ...React.Children.toArray(children) ],
       expressions
     );
