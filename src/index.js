@@ -21,6 +21,11 @@ function getTranslator(state) {
   return state.opts.translator || TRANSLATOR_IDENTIFIER;
 }
 
+function normalizeWhitespace(state) {
+  const normWs = state.opts.normalizeWhitespace;
+  return normWs != null ? normWs : true;
+}
+
 export default function ({ types: t }) {
   function isTranslatableText(node) {
     return t.isJSXText(node) && node.value.trim();
@@ -153,7 +158,7 @@ export default function ({ types: t }) {
     );
   }
 
-  function extract(node, placeholders, normalize=true, elements=[], expressions=[]) {
+  function extract(node, placeholders, normalizeWs, elements=[], expressions=[]) {
     let format = "";
 
     for (const child of node.children) {
@@ -164,7 +169,7 @@ export default function ({ types: t }) {
       else if (t.isJSXElement(child)) {
         const idx = elements.length + 1;
         elements.push(stripElement(child));
-        const fmt = extract(child, placeholders, normalize, elements, expressions)[0];
+        const fmt = extract(child, placeholders, normalizeWs, elements, expressions)[0];
         format += `[${idx}:${fmt}]`;
       }
       else if (t.isJSXExpressionContainer(child)) {
@@ -176,8 +181,8 @@ export default function ({ types: t }) {
 
     // Normalize whitespace.
     // FIXME: Will cause trouble in <pre>, fix later.
-    if (normalize) {
-      format = format.replace(/\s+/g, " ")
+    if (normalizeWs) {
+      format = format.replace(/\s+/g, " ");
     }
 
     return [ format, elements, expressions ];
@@ -230,7 +235,7 @@ export default function ({ types: t }) {
 
     const placeholders = asList(i18nAttribute.value);
 
-    const [ format, newChildren, expressions ] = extract(node, placeholders);
+    const [ format, newChildren, expressions ] = extract(node, placeholders, normalizeWhitespace(state));
 
     const expressionsObject = t.objectExpression(
       placeholders.map((p, i) => t.objectProperty(

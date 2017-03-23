@@ -87,6 +87,13 @@ With options:
 
 Replace the function used when translating messages.
 
+### `normalizeWhitespace`
+
+`boolean`, defaults to `true`.
+
+If `true`, replace sequences of white space characters with a single space in
+messages that contain parameters and/or markup.
+
 ## Status
 
 Early alpha, working features are
