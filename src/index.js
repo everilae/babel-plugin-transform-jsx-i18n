@@ -77,10 +77,6 @@ export default function ({ types: t }) {
   function simpleTranslation(path, state) {
     const { node } = path;
 
-    if (!hasTranslatableText(node)) {
-      return;
-    }
-
     const newChildren = node.children.map(child => {
       if (isTranslatableText(child)) {
         return t.jSXExpressionContainer(translatedText(child.value, state));
@@ -235,10 +231,12 @@ export default function ({ types: t }) {
   }
 
   const visitor = {
+    const { node } = path;
     JSXElement(path, state) {
-      if (hasI18nMsg(path.node)) {
+      if (hasI18nMsg(node)) {
         return complexTranslation(path, state);
-      } else {
+      }
+      else if (hasTranslatableText(node)) {
         return simpleTranslation(path, state);
       }
     },
