@@ -32,7 +32,7 @@ var placeholders = React.createElement(
   Message,
   {
     format: "Hello, {name}!",
-    translator: gettext,
+    translator: function(message) { return gettext(message); },
     component: React.createElement("p", null),
     expressions: {
       name: "World"
@@ -44,7 +44,7 @@ var element = React.createElement(
   Message,
   {
     format: " Text content should be [1:translated]. [2:] ",
-    translator: gettext,
+    translator: function(message) { return gettext(message); },
     component: React.createElement("div", null),
     expressions: {}
   },
