@@ -67,12 +67,12 @@ function* getChildren(format, children, expressions) {
 
 class Message extends Component {
   render() {
-    const { format, component, expressions, children } = this.props;
+    const { format, component, expressions, children, translator } = this.props;
     return React.cloneElement(
       component,
       null,
       ...getChildren(
-        global.gettext(format),
+        translator(format),
         React.Children.toArray(children),
         expressions
       )
@@ -82,6 +82,7 @@ class Message extends Component {
 
 Message.propTypes = {
   format: React.PropTypes.string.isRequired,
+  translator: React.PropTypes.func.isRequired,
   component: React.PropTypes.element.isRequired,
   expressions: React.PropTypes.object
 };

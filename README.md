@@ -32,6 +32,7 @@ var placeholders = React.createElement(
   Message,
   {
     format: "Hello, {name}!",
+    translator: gettext,
     component: React.createElement("p", null),
     expressions: {
       name: "World"
@@ -43,6 +44,7 @@ var element = React.createElement(
   Message,
   {
     format: " Text content should be [1:translated]. [2:] ",
+    translator: gettext,
     component: React.createElement("div", null),
     expressions: {}
   },
@@ -61,6 +63,7 @@ Early alpha, working features are
 
 ## TODO
 
+- Tests!
 - Message extractor – initially target [gettext][5] catalogs.
 - Automatically inject `Message`, if needed.
 - `Message` and other runtime parts should perhaps have their own package.

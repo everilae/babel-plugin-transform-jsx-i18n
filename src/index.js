@@ -1,12 +1,13 @@
 import jsx from "babel-plugin-syntax-jsx";
 
-const GETTEXT = "gettext";
+const TRANSLATOR_IDENTIFIER = "gettext";
 const MESSAGE_IDENTIFIER = "Message"; 
 
 const I18N_MSG_ATTRIBUTE = "i18nMsg";
 const FORMAT_ATTRIBUTE = "format";
 const COMPONENT_ATTRIBUTE = "component";
 const EXPRESSIONS_ATTRIBUTE = "expressions";
+const TRANSLATOR_ATTRIBUTE = "translator";
 
 const TRANSLATABLE_ATTRIBUTES = [
   "alt",
@@ -38,7 +39,7 @@ export default function ({ types: t }) {
       /^(\s*)(.+?)(\s*)$/.exec(text);
 
     const translation = t.callExpression(
-      t.identifier(GETTEXT),
+      t.identifier(TRANSLATOR_IDENTIFIER),
       [ t.stringLiteral(messageId) ]
     );
 
@@ -190,6 +191,29 @@ export default function ({ types: t }) {
     }
   }
 
+  function jSXAttribute(identifier, value) {
+    return t.jSXAttribute(
+      t.jSXIdentifier(identifier),
+      typeof value === "string" ? t.stringLiteral(value) : t.jSXExpressionContainer(value)
+    );
+  }
+
+  const translator = () => {
+    const arg0 = () => t.identifier("message");
+
+    return t.functionExpression(
+      null, [ arg0() ],
+      t.blockStatement([
+        t.returnStatement(
+          t.callExpression(
+            t.identifier(TRANSLATOR_IDENTIFIER),
+            [ arg0() ]
+          )
+        )
+      ])
+    );
+  };
+
   function complexTranslation(path, state) {
     const { node } = path;
 
@@ -211,18 +235,10 @@ export default function ({ types: t }) {
     );
 
     const msgAttributes = [
-      t.jSXAttribute(
-        t.jSXIdentifier(FORMAT_ATTRIBUTE),
-        t.stringLiteral(format)
-      ),
-      t.jSXAttribute(
-        t.jSXIdentifier(COMPONENT_ATTRIBUTE),
-        t.jSXExpressionContainer(newElement)
-      ),
-      t.jSXAttribute(
-        t.jSXIdentifier(EXPRESSIONS_ATTRIBUTE),
-        t.jSXExpressionContainer(expressionsObject)
-      )
+      jSXAttribute(FORMAT_ATTRIBUTE, format),
+      jSXAttribute(COMPONENT_ATTRIBUTE, newElement),
+      jSXAttribute(EXPRESSIONS_ATTRIBUTE, expressionsObject),
+      jSXAttribute(TRANSLATOR_ATTRIBUTE, translator())
     ];
 
     return path.replaceWith(
