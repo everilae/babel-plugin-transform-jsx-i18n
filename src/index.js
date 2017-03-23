@@ -71,12 +71,6 @@ export default function ({ types: t }) {
       }
     }
 
-    for (const attr of node.openingElement.attributes) {
-      if (isTranslatableAttribute(attr)) {
-        return true;
-      }
-    }
-
     return false;
   }
 
