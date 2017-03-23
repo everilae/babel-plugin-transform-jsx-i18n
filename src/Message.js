@@ -1,27 +1,62 @@
 import React, { Component } from 'react';
 
-function* parse(format, children, expressions) {
-  const parserRegex = /([^[]*)(?:\[(\d+):([^\]]*)\])?/g;
+const openElement = /([^[]*)(?:\[(\d+):)?(.*)/;
+const OPEN_ELEMENT = "[";
+const CLOSE_ELEMENT = "]";
+
+function parse(format) {
+  const [ , text, idx, rest ] = openElement.exec(format);
+
+  if (!text && !idx) {
+    return null;
+  }
+
+  let content = '';
+
+  let i = 0, count = 1, rl = rest.length;
+
+  if (idx) {
+    for (; count && i < rl; i++) {
+      if (rest[i] === OPEN_ELEMENT) {
+        count++;
+      } else if (rest[i] === CLOSE_ELEMENT) {
+        count--;
+      }
+    }
+    // If count === 0, we've found the end of this element placeholder
+    if (!count) {
+      content = rest.slice(0, i - 1);
+    } else {
+      throw new Error("Unterminated element placeholder");
+    }
+  }
+
+  return [ text, idx, content, rest.slice(i) ];
+}
+
+function* getChildren(format, children, expressions) {
   const placeholderRegex = /{[\w\d_]+}/g;
-  let match = parserRegex.exec(format);
 
-  while (match[0]) {
-    const [ , text, idx, content ] = match;
+  let match = parse(format);
+  while (match) {
+    const [ text, idx, content, rest ] = match;
 
-    yield text.replace(
-      placeholderRegex,
-      p => expressions[p.slice(1, -1)]
-    );
+    if (text) {
+      yield text.replace(
+        placeholderRegex,
+        p => expressions[p.slice(1, -1)]
+      );
+    }
 
     if (idx) {
       yield React.cloneElement(
         children[idx - 1],
         null,
-        ...parse(content, children, expressions)
+        ...getChildren(content, children, expressions)
       );
     }
 
-    match = parserRegex.exec(format);
+    match = parse(rest);
   }
 }
 
@@ -31,7 +66,7 @@ class Message extends Component {
     return React.cloneElement(
       component,
       null,
-      ...parse(
+      ...getChildren(
         global.gettext(format),
         React.Children.toArray(children),
         expressions

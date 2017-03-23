@@ -158,8 +158,8 @@ export default function ({ types: t }) {
       }
       else if (t.isJSXElement(child)) {
         const idx = elements.length + 1;
-        const fmt = extract(child, placeholders, elements, expressions)[0];
         elements.push(stripElement(child));
+        const fmt = extract(child, placeholders, elements, expressions)[0];
         format += `[${idx}:${fmt}]`;
       }
       else if (t.isJSXExpressionContainer(child)) {
