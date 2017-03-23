@@ -148,7 +148,7 @@ export default function ({ types: t }) {
     );
   }
 
-  function extract(node, placeholders, elements=[], expressions=[]) {
+  function extract(node, placeholders, normalize=true, elements=[], expressions=[]) {
     let format = "";
 
     for (const child of node.children) {
@@ -159,7 +159,7 @@ export default function ({ types: t }) {
       else if (t.isJSXElement(child)) {
         const idx = elements.length + 1;
         elements.push(stripElement(child));
-        const fmt = extract(child, placeholders, elements, expressions)[0];
+        const fmt = extract(child, placeholders, normalize, elements, expressions)[0];
         format += `[${idx}:${fmt}]`;
       }
       else if (t.isJSXExpressionContainer(child)) {
@@ -167,6 +167,12 @@ export default function ({ types: t }) {
         expressions.push(child);
         format += `{${p}}`;
       }
+    }
+
+    // Normalize whitespace.
+    // FIXME: Will cause trouble in <pre>, fix later.
+    if (normalize) {
+      format = format.replace(/\s+/g, " ")
     }
 
     return [ format, elements, expressions ];
@@ -178,7 +184,7 @@ export default function ({ types: t }) {
     } else if (t.isJSXExpressionContainer(node) &&
         t.isArrayExpression(node.expression)) {
       // array of string literals expected
-      return node.expression.map(expr => expr.value);
+      return node.expression.elements.map(expr => expr.value);
     } else {
       throw new Error("Unexpected type");
     }
