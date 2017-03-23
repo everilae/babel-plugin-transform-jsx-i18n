@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import "babel-polyfill";
 
 const TEXT = Symbol("text");
-const NUMBER = Symbol("number");
+const INDEX = Symbol("index");
 const OPEN_ELEMENT = Symbol("[");
 const CLOSE_ELEMENT = Symbol("]");
 
@@ -17,7 +17,7 @@ function* tokenize(format) {
       yield { type: TEXT, value: text };
     } else if (openElement) {
       yield { type: OPEN_ELEMENT };
-      yield { type: NUMBER, value: +index };
+      yield { type: INDEX, value: +index };
     } else if (closeElement) {
       yield { type: CLOSE_ELEMENT };
     }
@@ -41,7 +41,7 @@ function parse(format) {
         break;
       }
 
-      case NUMBER:
+      case INDEX:
         stack[stack.length - 1].index = value;
         break;
 
