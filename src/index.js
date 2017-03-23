@@ -17,6 +17,10 @@ const TRANSLATABLE_ATTRIBUTES = [
 
 export { default as Message } from './Message';
 
+function getTranslator(state) {
+  return state.opts.translator || TRANSLATOR_IDENTIFIER;
+}
+
 export default function ({ types: t }) {
   function isTranslatableText(node) {
     return t.isJSXText(node) && node.value.trim();
@@ -34,12 +38,12 @@ export default function ({ types: t }) {
       t.binaryExpression('+', x, y));
   }
 
-  function translatedText(text) {
+  function translatedText(text, state) {
     const [ , leadingWs, messageId, trailingWs ] =
       /^(\s*)(.+?)(\s*)$/.exec(text);
 
     const translation = t.callExpression(
-      t.identifier(TRANSLATOR_IDENTIFIER),
+      t.identifier(getTranslator(state)),
       [ t.stringLiteral(messageId) ]
     );
 
@@ -71,12 +75,12 @@ export default function ({ types: t }) {
     return false;
   }
 
-  function translateAttributes(attributes) {
+  function translateAttributes(attributes, state) {
     return attributes.map(attr => {
       if (isTranslatableAttribute(attr)) {
         return t.jSXAttribute(
           attr.name,
-          t.jSXExpressionContainer(translatedText(attr.value.value))
+          t.jSXExpressionContainer(translatedText(attr.value.value, state))
         );
       } else {
         return attr;
@@ -93,13 +97,13 @@ export default function ({ types: t }) {
 
     const newOpeningElement = t.jSXOpeningElement(
       node.openingElement.name,
-      translateAttributes(node.openingElement.attributes),
+      translateAttributes(node.openingElement.attributes, state),
       node.openingElement.selfClosing
     );
 
     const newChildren = node.children.map(child => {
       if (isTranslatableText(child)) {
-        return t.jSXExpressionContainer(translatedText(child.value));
+        return t.jSXExpressionContainer(translatedText(child.value, state));
       } else {
         return child;
       }
@@ -198,7 +202,7 @@ export default function ({ types: t }) {
     );
   }
 
-  const translator = () => {
+  const translator = state => {
     const arg0 = () => t.identifier("message");
 
     return t.functionExpression(
@@ -206,7 +210,7 @@ export default function ({ types: t }) {
       t.blockStatement([
         t.returnStatement(
           t.callExpression(
-            t.identifier(TRANSLATOR_IDENTIFIER),
+            t.identifier(getTranslator(state)),
             [ arg0() ]
           )
         )
@@ -220,7 +224,7 @@ export default function ({ types: t }) {
     const [ i18nAttribute, filteredAttributes ] =
       partitionAttributes(node.openingElement.attributes);
 
-    const newElement = stripElement(node, translateAttributes(filteredAttributes));
+    const newElement = stripElement(node, translateAttributes(filteredAttributes, state));
 
     const msgId = () => t.jSXIdentifier(MESSAGE_IDENTIFIER);
 
@@ -238,7 +242,7 @@ export default function ({ types: t }) {
       jSXAttribute(FORMAT_ATTRIBUTE, format),
       jSXAttribute(COMPONENT_ATTRIBUTE, newElement),
       jSXAttribute(EXPRESSIONS_ATTRIBUTE, expressionsObject),
-      jSXAttribute(TRANSLATOR_ATTRIBUTE, translator())
+      jSXAttribute(TRANSLATOR_ATTRIBUTE, translator(state))
     ];
 
     return path.replaceWith(

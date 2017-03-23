@@ -53,6 +53,40 @@ var element = React.createElement(
 );
 ```
 
+## Usage
+
+Via `.babelrc`
+
+### .babelrc
+
+Without options:
+
+```json
+{
+  "plugins": ["transform-jsx-localize"]
+}
+```
+
+With options:
+
+```json
+{
+  "plugins": [
+    ["transform-jsx-localize", {
+      "translator": "myTranslatorFun"
+    }]
+  ]
+}
+```
+
+## Options
+
+### `translator`
+
+`string`, defaults to `gettext`.
+
+Replace the function used when translating messages.
+
 ## Status
 
 Early alpha, working features are
