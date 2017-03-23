@@ -15,6 +15,11 @@ const TRANSLATABLE_ATTRIBUTES = [
   "title"
 ];
 
+const ELEMENT_TYPE_BLACKLIST = [
+  // As to why would anyone have inline styles in React...
+  "style"
+];
+
 export { default as Message } from './Message';
 
 function getTranslator(state) {
@@ -27,6 +32,10 @@ function normalizeWhitespace(state) {
 }
 
 export default function ({ types: t }) {
+  function isBlacklisted(node) {
+    return ELEMENT_TYPE_BLACKLIST.includes(node.openingElement.name.name);
+  }
+
   function isTranslatableText(node) {
     return t.isJSXText(node) && node.value.trim();
   }
@@ -234,6 +243,10 @@ export default function ({ types: t }) {
   const visitor = {
     JSXElement(path, state) {
       const { node } = path;
+
+      if (isBlacklisted(node)) {
+        return;
+      }
 
       if (hasI18nMsg(node)) {
         return complexTranslation(path, state);
