@@ -81,12 +81,6 @@ export default function ({ types: t }) {
       return;
     }
 
-    const newOpeningElement = t.jSXOpeningElement(
-      node.openingElement.name,
-      node.openingElement.attributes,
-      node.openingElement.selfClosing
-    );
-
     const newChildren = node.children.map(child => {
       if (isTranslatableText(child)) {
         return t.jSXExpressionContainer(translatedText(child.value, state));
@@ -97,7 +91,7 @@ export default function ({ types: t }) {
 
     return path.replaceWith(
       t.jSXElement(
-        newOpeningElement,
+        node.openingElement,
         node.closingElement,
         newChildren,
         node.selfClosing
