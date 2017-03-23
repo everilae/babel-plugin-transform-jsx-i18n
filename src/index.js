@@ -1,5 +1,7 @@
 import jsx from "babel-plugin-syntax-jsx";
 
+const RUNTIME_MODULE_IDENTIFIER = "babel-plugin-transform-jsx-localize";
+
 const TRANSLATOR_IDENTIFIER = "gettext";
 const MESSAGE_IDENTIFIER = "Message"; 
 
@@ -247,6 +249,34 @@ export default function ({ types: t }) {
     );
   }
 
+  const IMPORT_INJECTED = "messageImportInjected";
+
+  function injectRuntimeImportsIfNeeded(path, state) {
+    if (state.get(IMPORT_INJECTED)) {
+      return;
+    }
+
+    state.set(IMPORT_INJECTED, true);
+
+    const programPath = path.findParent(path => path.isProgram());
+    const { node } = programPath;
+
+    const msgId = () => t.identifier(MESSAGE_IDENTIFIER);
+
+    return programPath.replaceWith(
+      t.program(
+        [
+          t.importDeclaration(
+            [ t.importSpecifier(msgId(), msgId()) ],
+            t.stringLiteral(RUNTIME_MODULE_IDENTIFIER)
+          ),
+          ...node.body
+        ],
+        node.directives
+      )
+    );
+  }
+
   const visitor = {
     JSXElement(path, state) {
       const { node } = path;
@@ -256,6 +286,7 @@ export default function ({ types: t }) {
       }
 
       if (hasI18nMsg(node)) {
+        injectRuntimeImportsIfNeeded(path, state);
         return complexTranslation(path, state);
       }
       else if (hasTranslatableText(node)) {

@@ -17,7 +17,7 @@ var simple = <p>Hello, World!</p>;
 
 var placeholders = <p i18nMsg="name">Hello, { "World" }!</p>;
 
-var multiplePlaceholder = <p i18nMsg="first, last">{ first_name } { last_name }</p>
+var multiplePlaceholders = <p i18nMsg="first, last">{ first_name } { last_name }</p>
 
 var elements = <div i18nMsg="">
   Text content should be <strong>translated</strong>.
@@ -42,7 +42,7 @@ var placeholders = React.createElement(
   }
 );
 
-var multiplePlaceholder = React.createElement(Message, {
+var multiplePlaceholders = React.createElement(Message, {
   format: "{first} {last}",
   component: React.createElement("p", null),
   expressions: {
