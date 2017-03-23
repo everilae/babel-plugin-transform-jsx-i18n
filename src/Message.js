@@ -49,9 +49,14 @@ function* getChildren(format, children, expressions) {
     }
 
     if (idx) {
+      const child = children[idx - 1];
+
+      if (!child) {
+        throw new Error("Element index out of range");
+      }
+
       yield React.cloneElement(
-        children[idx - 1],
-        null,
+        child, null,
         ...getChildren(content, children, expressions)
       );
     }
