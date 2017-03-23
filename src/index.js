@@ -80,19 +80,6 @@ export default function ({ types: t }) {
     return false;
   }
 
-  function translateAttributes(attributes, state) {
-    return attributes.map(attr => {
-      if (isTranslatableAttribute(attr)) {
-        return t.jSXAttribute(
-          attr.name,
-          t.jSXExpressionContainer(translatedText(attr.value.value, state))
-        );
-      } else {
-        return attr;
-      }
-    });
-  }
-
   function simpleTranslation(path, state) {
     const { node } = path;
 
@@ -102,7 +89,7 @@ export default function ({ types: t }) {
 
     const newOpeningElement = t.jSXOpeningElement(
       node.openingElement.name,
-      translateAttributes(node.openingElement.attributes, state),
+      node.openingElement.attributes,
       node.openingElement.selfClosing
     );
 
@@ -164,7 +151,6 @@ export default function ({ types: t }) {
     for (const child of node.children) {
       if (t.isJSXText(child)) {
         format += child.value;
-
       }
       else if (t.isJSXElement(child)) {
         const idx = elements.length + 1;
@@ -229,7 +215,7 @@ export default function ({ types: t }) {
     const [ i18nAttribute, filteredAttributes ] =
       partitionAttributes(node.openingElement.attributes);
 
-    const newElement = stripElement(node, translateAttributes(filteredAttributes, state));
+    const newElement = stripElement(node, filteredAttributes);
 
     const msgId = () => t.jSXIdentifier(MESSAGE_IDENTIFIER);
 
@@ -266,6 +252,19 @@ export default function ({ types: t }) {
         return complexTranslation(path, state);
       } else {
         return simpleTranslation(path, state);
+      }
+    },
+
+    JSXAttribute(path, state) {
+      const { node } = path;
+
+      if (isTranslatableAttribute(node)) {
+        return path.replaceWith(
+          t.jSXAttribute(
+            node.name,
+            t.jSXExpressionContainer(translatedText(node.value.value, state))
+          )
+        );
       }
     }
   };
