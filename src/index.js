@@ -231,8 +231,9 @@ export default function ({ types: t }) {
   }
 
   const visitor = {
-    const { node } = path;
     JSXElement(path, state) {
+      const { node } = path;
+
       if (hasI18nMsg(node)) {
         return complexTranslation(path, state);
       }
