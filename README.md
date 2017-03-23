@@ -1,5 +1,12 @@
 # babel-plugin-transform-jsx-localize
-Localize JSX as is.
+
+Localize JSX as is, with very little extra markup.
+
+The translator is inspired by [Genshi][1], [Kajiki][2], and [Tonnikala][3],
+which are XML based templating languages in Python. The latter 2 compile a
+template to a Python program, and while Kajiki writes source text, Tonnikala
+writes code as [Abstract Syntax Trees][4]. This seemed like a good fit in the
+Babel and React ecosystem, where AST parsing and rewriting is the norm.
 
 ## React
 
@@ -35,7 +42,7 @@ var placeholders = React.createElement(
 var element = React.createElement(
   Message,
   {
-    format: "\n  Text content should be [1:translated].\n  [2:]",
+    format: " Text content should be [1:translated]. [2:] ",
     component: React.createElement("div", null),
     expressions: {}
   },
@@ -43,3 +50,27 @@ var element = React.createElement(
   React.createElement("img", { src: "/img/hello.jpg", alt: gettext("Text props should be translated") })
 );
 ```
+
+## Status
+
+Early alpha, working features are
+
+- Simple translations.
+- Text attribute translations.
+- Complex translations with parameters and/or markup.
+
+## TODO
+
+- Message extractor – initially target [gettext][5] catalogs.
+- Automatically inject `Message`, if needed.
+- `Message` and other runtime parts should perhaps have their own package.
+
+## Contributors
+
+- Ilja Everilä
+
+  [1]: https://pythonhosted.org/Genshi/
+  [2]: https://pythonhosted.org/Kajiki/
+  [3]: https://github.com/tetframework/Tonnikala/
+  [4]: https://en.wikipedia.org/wiki/Abstract_syntax_tree
+  [5]: https://en.wikipedia.org/wiki/Gettext
