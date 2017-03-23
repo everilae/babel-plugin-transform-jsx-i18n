@@ -62,9 +62,11 @@ function parse(format) {
 }
 
 function format(str, expressions) {
-  return str.
-    replace(/{([\w\d_]+)}/g, (_, p1) => String(expressions[p1])).
-    replace(/\\(.)/g, "$1");
+  return str.replace(/{([\w\d_]+)}/g, (_, p1) => String(expressions[p1]));
+}
+
+function unescapeBackslashes(str) {
+  return str.replace(/\\(.)/g, "$1");
 }
 
 function mapComponents({ index, children }, components, expressions) {
@@ -73,7 +75,7 @@ function mapComponents({ index, children }, components, expressions) {
     null,
     ...children.map(child => {
       if (typeof child === "string") {
-        return format(child, expressions);
+        return unescapeBackslashes(format(child, expressions));
       } else {
         return mapComponents(child, components, expressions);
       }
