@@ -155,7 +155,7 @@ export default function ({ types: t }) {
       format = format.replace(/\s+/g, " ");
     }
 
-    return [ format, elements, expressions ];
+    return { format, elements, expressions };
   }
 
   function asList(node) {
@@ -205,7 +205,8 @@ export default function ({ types: t }) {
 
     const placeholders = asList(i18nAttribute.value);
 
-    const [ format, newChildren, expressions ] = extract(node, placeholders, normalizeWhitespace(state));
+    const { format, elements: newChildren, expressions } =
+      extract(node, placeholders, normalizeWhitespace(state));
 
     const expressionsObject = t.objectExpression(
       placeholders.map((p, i) => t.objectProperty(
