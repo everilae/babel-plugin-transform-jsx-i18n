@@ -53,8 +53,14 @@ export default function ({ types: t }) {
   }
 
   function translatedText(text, state) {
-    const [ , leadingWs, messageId, trailingWs ] =
-      /^(\s*)(.+?)(\s*)$/.exec(text);
+    let [ , leadingWs, messageId, trailingWs ] =
+      /^(\s*)((?:.|\s)+?)(\s*)$/.exec(text);
+
+    if (normalizeWhitespace(state)) {
+      leadingWs = leadingWs && " ";
+      trailingWs = trailingWs && " ";
+      messageId = messageId.replace(/\s+/g, " ");
+    }
 
     const translation = t.callExpression(
       t.identifier(getTranslator(state)),
