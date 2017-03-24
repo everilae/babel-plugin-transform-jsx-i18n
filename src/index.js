@@ -19,7 +19,8 @@ const TRANSLATABLE_ATTRIBUTES = [
 
 const ELEMENT_TYPE_BLACKLIST = [
   // As to why would anyone have inline styles in React...
-  "style"
+  "style",
+  "code"
 ];
 
 export { default as Message } from './Message';
