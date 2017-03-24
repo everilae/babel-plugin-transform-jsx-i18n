@@ -87,7 +87,7 @@ class Message extends Component {
   render() {
     const { format, component, expressions, children, translator } = this.props;
     return mapComponents(
-      parse(translator(format)),
+      parse(translator.call(this, format)),
       [ component, ...React.Children.toArray(children) ],
       expressions
     );

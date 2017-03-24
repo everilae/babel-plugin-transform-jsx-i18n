@@ -24,16 +24,19 @@ const ELEMENT_TYPE_BLACKLIST = [
 
 export { default as Message } from './Message';
 
-function getTranslator(state) {
-  return state.opts.translator || TRANSLATOR_IDENTIFIER;
-}
-
 function normalizeWhitespace(state) {
   const normWs = state.opts.normalizeWhitespace;
   return normWs != null ? normWs : true;
 }
 
 export default function ({ types: t }) {
+  function getTranslator(state) {
+    const identifier = state.opts.translator || TRANSLATOR_IDENTIFIER;
+    return identifier.split(".").
+      map(name => name === "this" ? t.thisExpression() : t.identifier(name)).
+      reduce((obj, prop) => t.memberExpression(obj, prop));
+  }
+
   function isBlacklisted(node) {
     return ELEMENT_TYPE_BLACKLIST.includes(node.openingElement.name.name);
   }
@@ -65,7 +68,7 @@ export default function ({ types: t }) {
     }
 
     const translation = t.callExpression(
-      t.identifier(getTranslator(state)),
+      getTranslator(state),
       [ t.stringLiteral(messageId) ]
     );
 
@@ -203,7 +206,7 @@ export default function ({ types: t }) {
       t.blockStatement([
         t.returnStatement(
           t.callExpression(
-            t.identifier(getTranslator(state)),
+            getTranslator(state),
             [ arg0() ]
           )
         )
