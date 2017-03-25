@@ -4,12 +4,14 @@ const RUNTIME_MODULE_IDENTIFIER = "babel-plugin-transform-jsx-localize";
 
 const TRANSLATOR_IDENTIFIER = "gettext";
 const MESSAGE_IDENTIFIER = "Message"; 
+const LOCAL_MESSAGE_IDENTIFIER_KEY = "localMessageIdentifier";
 
 const I18N_MSG_ATTRIBUTE = "i18nMsg";
 const FORMAT_ATTRIBUTE = "format";
 const COMPONENT_ATTRIBUTE = "component";
 const EXPRESSIONS_ATTRIBUTE = "expressions";
 const TRANSLATOR_ATTRIBUTE = "translator";
+const LANG_ATTRIBUTE = "lang";
 
 const TRANSLATABLE_ATTRIBUTES = [
   "alt",
@@ -30,6 +32,24 @@ function normalizeWhitespace(state) {
   return normWs != null ? normWs : true;
 }
 
+// For instanceof compatibility
+function LocalizerError(message) {
+  this.message = message;
+  this.stack = (new Error()).stack;
+}
+
+LocalizerError.prototype = new Error();
+
+function any(iterable, pred) {
+  for (const it of iterable) {
+    if (pred(it)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export default function ({ types: t }) {
   function getTranslator(state) {
     const identifier = state.opts.translator || TRANSLATOR_IDENTIFIER;
@@ -38,8 +58,29 @@ export default function ({ types: t }) {
       reduce((obj, prop) => t.memberExpression(obj, prop));
   }
 
-  function isBlacklisted(node) {
-    return ELEMENT_TYPE_BLACKLIST.includes(node.openingElement.name.name);
+  function isBlacklisted(path) {
+    return Boolean(
+      path.find(path => path.isJSXElement() &&
+        t.isIdentifier(path.node.openingElement.name) &&
+        ELEMENT_TYPE_BLACKLIST.includes(path.node.openingElement.name.name))
+    );
+  }
+
+  function hasLang(path) {
+    return Boolean(
+      path.find(path => {
+        if (!path.isJSXElement()) {
+          return false;
+        }
+
+        return any(
+          path.node.openingElement.attributes,
+          attribute => t.isJSXAttribute(attribute) &&
+            t.isJSXIdentifier(attribute.name) &&
+            attribute.name.name === LANG_ATTRIBUTE
+        );
+      })
+    );
   }
 
   function isTranslatableText(node) {
@@ -106,7 +147,7 @@ export default function ({ types: t }) {
       }
     });
 
-    return path.replaceWith(
+    path.replaceWith(
       t.jSXElement(
         node.openingElement,
         node.closingElement,
@@ -116,13 +157,15 @@ export default function ({ types: t }) {
     );
   }
 
-  function hasI18nMsg(node) {
-    for (const attr of node.openingElement.attributes) {
-      if (attr.name.name === I18N_MSG_ATTRIBUTE) {
-        return true;
-      }
-    }
-    return false;
+  function hasAttribute(node, name) {
+    return any(
+      node.openingElement.attributes,
+      attribute => (
+        t.isJSXAttribute(attribute) &&
+        t.isJSXIdentifier(attribute.name) &&
+        attribute.name.name === name
+      )
+    );
   }
 
   function partitionAttributes(attributes) {
@@ -180,7 +223,7 @@ export default function ({ types: t }) {
     return { format, elements, expressions };
   }
 
-  function asList(node) {
+  function asList(node, path) {
     if (t.isStringLiteral(node)) {
       return node.value.trim() ? node.value.trim().split(/\s*,\s*/g) : [];
     } else if (t.isJSXExpressionContainer(node) &&
@@ -188,7 +231,7 @@ export default function ({ types: t }) {
       // array of string literals expected
       return node.expression.elements.map(expr => expr.value);
     } else {
-      throw new Error("Unexpected type");
+      throw new LocalizerError("i18nMsg attribute must be string or array of string");
     }
   }
 
@@ -223,7 +266,7 @@ export default function ({ types: t }) {
 
     const newElement = stripElement(node, filteredAttributes);
 
-    const msgId = () => t.jSXIdentifier(MESSAGE_IDENTIFIER);
+    const msgId = t.jSXIdentifier(state.get(LOCAL_MESSAGE_IDENTIFIER_KEY).name);
 
     const placeholders = asList(i18nAttribute.value);
 
@@ -245,8 +288,8 @@ export default function ({ types: t }) {
 
     return path.replaceWith(
       t.jSXElement(
-        t.jSXOpeningElement(msgId(), msgAttributes, false),
-        t.jSXClosingElement(msgId()),
+        t.jSXOpeningElement(msgId, msgAttributes, false),
+        t.jSXClosingElement(msgId),
         newChildren,
         false
       )
@@ -266,17 +309,14 @@ export default function ({ types: t }) {
     const { node } = programPath;
 
     const msgId = () => t.identifier(MESSAGE_IDENTIFIER);
+    const localMsgId = programPath.scope.generateUidIdentifier("Message");
+    state.set(LOCAL_MESSAGE_IDENTIFIER_KEY, localMsgId);
 
-    return programPath.replaceWith(
-      t.program(
-        [
-          t.importDeclaration(
-            [ t.importSpecifier(msgId(), msgId()) ],
-            t.stringLiteral(RUNTIME_MODULE_IDENTIFIER)
-          ),
-          ...node.body
-        ],
-        node.directives
+    programPath.unshiftContainer(
+      'body',
+      t.importDeclaration(
+        [ t.importSpecifier(localMsgId, msgId()) ],
+        t.stringLiteral(RUNTIME_MODULE_IDENTIFIER)
       )
     );
   }
@@ -285,24 +325,33 @@ export default function ({ types: t }) {
     JSXElement(path, state) {
       const { node } = path;
 
-      if (isBlacklisted(node)) {
+      if (isBlacklisted(path) || hasLang(path)) {
         return;
       }
 
-      if (hasI18nMsg(node)) {
-        injectRuntimeImportsIfNeeded(path, state);
-        return complexTranslation(path, state);
-      }
-      else if (hasTranslatableText(node)) {
-        return simpleTranslation(path, state);
+      try {
+        if (hasAttribute(node, I18N_MSG_ATTRIBUTE)) {
+          injectRuntimeImportsIfNeeded(path, state);
+          complexTranslation(path, state);
+        }
+        else if (hasTranslatableText(node)) {
+          simpleTranslation(path, state);
+        }
+      } catch (error) {
+        if (error instanceof LocalizerError) {
+          throw path.buildCodeFrameError(error.message);
+        } else {
+          // Rethrow
+          throw error;
+        }
       }
     },
 
     JSXAttribute(path, state) {
       const { node } = path;
 
-      if (isTranslatableAttribute(node)) {
-        return path.replaceWith(
+      if (!hasLang(path) && isTranslatableAttribute(node)) {
+        path.replaceWith(
           t.jSXAttribute(
             node.name,
             t.jSXExpressionContainer(translatedText(node.value.value, state))
