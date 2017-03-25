@@ -91,7 +91,11 @@ function parseAndExtract(source) {
 function makeTranslationObject(catalog) {
   return {
     charset: "utf-8",
-    headers: {},
+    headers: {
+      "mime-version": "1.0",
+      "content-type": "text/plain; charset=UTF-8",
+      "content-transfer-encoding": "8bit"
+    },
     translations: {
       "": Object.keys(catalog).reduce((obj, key) => {
         obj[key] = {
