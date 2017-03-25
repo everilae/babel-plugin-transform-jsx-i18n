@@ -23,6 +23,12 @@ var elements = <div i18nMsg="">
   Text content should be <strong>translated</strong>.
   <img src="/img/hello.jpg" alt="Text props should be translated" />
 </div>;
+
+var untranslated = <div lang="en">
+  Text, elements, and attributes in an element with <code>lang</code> attribute
+  shall be untouched. 
+  <img src="/img/hello.jpg" alt="Hello, World!" />
+</div>;
 ```
 
 ### Out
@@ -64,6 +70,19 @@ var element = React.createElement(
   },
   React.createElement("strong", null),
   React.createElement("img", { src: "/img/hello.jpg", alt: gettext("Text props should be translated") })
+);
+
+var untranslated = React.createElement(
+  "div",
+  { lang: "en" },
+  "Text, elements, and attributes in an element with ",
+  React.createElement(
+    "code",
+    null,
+    "lang"
+  ),
+  " attribute shall be untouched.",
+  React.createElement("img", { src: "/img/hello.jpg", alt: "Hello, World!" })
 );
 ```
 
