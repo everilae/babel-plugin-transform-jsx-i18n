@@ -137,7 +137,7 @@ Early alpha, working features are
 ## TODO
 
 - Tests!
-- Message extractor – initially target [gettext][5] catalogs.
+- ~~Message extractor – initially target [gettext][5] catalogs.~~
 - ~~Automatically inject `Message`, if needed.~~
 - `Message` and other runtime parts should perhaps have their own package.
 - ~~Improve `Message` format parser and add escaping support. Currently it is
