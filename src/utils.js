@@ -21,7 +21,7 @@ export function add(x, y, ...rest) {
 export function isBlacklisted(path) {
   return Boolean(
     path.find(path => path.isJSXElement() &&
-      t.isIdentifier(path.node.openingElement.name) &&
+      t.isJSXIdentifier(path.node.openingElement.name) &&
       c.ELEMENT_TYPE_BLACKLIST.includes(path.node.openingElement.name.name))
   );
 }
