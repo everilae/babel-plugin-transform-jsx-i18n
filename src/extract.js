@@ -25,8 +25,7 @@ function extractFormat(node) {
   const placeholders = u.asList(i18nAttribute.value);
 
   // FIXME: Make whitespace normalization configurable
-  const { format } =
-    u.extract(node, placeholders, true);
+  const { format } = u.extract(node, placeholders, true);
 
   return format;
 }
@@ -90,7 +89,6 @@ function parseAndExtract(source) {
 }
 
 function makeTranslationObject(catalog) {
-  console.log(catalog);
   return {
     charset: "utf-8",
     headers: {},
