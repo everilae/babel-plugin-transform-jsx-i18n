@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Localize JSX text as is.",
   "main": "lib/index.js",
+  "bin": {
+    "extract-messages": "./lib/extract.js"
+  },
   "scripts": {
     "build": "babel src -d lib",
     "test": "echo \"Error: no test specified\" && exit 1"
