@@ -120,6 +120,7 @@ function main(encoding="utf-8") {
       const translationObj = makeTranslationObject(catalog);
       const po = gettextParser.po.compile(translationObj);
       process.stdout.write(po);
+      process.stdout.write("\n");
     });
 }
 
