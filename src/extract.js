@@ -6,6 +6,7 @@ import * as fs from "fs";
 import * as u from "./utils";
 import * as c from "./common";
 import LocalizerError from "./LocalizerError";
+import * as gettextParser from "gettext-parser";
 
 function textToMessage(text) {
   return text.trim().replace(/\s+/g, " ");
@@ -88,6 +89,23 @@ function parseAndExtract(source) {
   return catalog;
 }
 
+function makeTranslationObject(catalog) {
+  console.log(catalog);
+  return {
+    charset: "utf-8",
+    headers: {},
+    translations: {
+      "": Object.keys(catalog).reduce((obj, key) => {
+        obj[key] = {
+          msgid: key,
+          msgstr: [ catalog[key] ]
+        };
+        return obj;
+      }, {})
+    }
+  };
+}
+
 function main(encoding="utf-8") {
   const readFile = u.promisify(fs.readFile);
   const fileNames = process.argv.slice(
@@ -96,8 +114,9 @@ function main(encoding="utf-8") {
   Promise.all(fileNames.map(fileName => readFile(fileName, encoding))).
     then(sources => sources.map(parseAndExtract)).
     then(catalogs => Object.assign(...catalogs)).
-    then(catalog => JSON.stringify(catalog, null, 2)).
-    then(jsonCatalog => process.stdout.write(jsonCatalog + "\n"));
+    then(makeTranslationObject).
+    then(translationObject => gettextParser.po.compile(translationObject)).
+    then(po => process.stdout.write(po));
 }
 
 if (require.main === module) {
