@@ -110,11 +110,13 @@ function main(encoding="utf-8") {
     process.argv[0].endsWith("node") ? 2 : 1);
 
   Promise.all(fileNames.map(fileName => readFile(fileName, encoding))).
-    then(sources => sources.map(parseAndExtract)).
-    then(catalogs => Object.assign(...catalogs)).
-    then(makeTranslationObject).
-    then(translationObject => gettextParser.po.compile(translationObject)).
-    then(po => process.stdout.write(po));
+    then(sources => {
+      const catalogs = sources.map(parseAndExtract);
+      const catalog = Object.assign(...catalogs);
+      const translationObj = makeTranslationObject(catalog);
+      const po = gettextParser.po.compile(translationObj);
+      process.stdout.write(po);
+    });
 }
 
 if (require.main === module) {
