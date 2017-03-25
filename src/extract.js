@@ -34,7 +34,7 @@ function jSXElement(path, catalog) {
   const { node } = path;
 
   if (u.isBlacklisted(path) || u.hasLang(path)) {
-    path.remove();
+    path.skip();
     return;
   }
 
@@ -43,7 +43,7 @@ function jSXElement(path, catalog) {
       const format = extractFormat(node);
       catalog[format] = format;
       // This keeps possible children from being processed.
-      path.remove();
+      path.skip();
     }
     else if (u.hasTranslatableText(node)) {
       extractMessages(node).forEach(msg => catalog[msg] = msg);
