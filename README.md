@@ -34,42 +34,44 @@ var untranslated = <div lang="en">
 ### Out
 
 ```javascript
-var simple = React.createElement("p", null, gettext("Hello, World!"));
+var _babelPluginTransformJsxLocalize = require("babel-plugin-transform-jsx-localize");
 
-var placeholders = React.createElement(
-  Message,
-  {
-    format: "Hello, {name}!",
-    translator: function(message) { return gettext(message); },
-    component: React.createElement("p", null),
-    expressions: {
-      name: "World"
-    }
-  }
+var simple = React.createElement(
+  "p",
+  null,
+  gettext("Hello, World!")
 );
 
-var multiplePlaceholders = React.createElement(Message, {
+var placeholders = React.createElement(_babelPluginTransformJsxLocalize.Message, {
+  format: "Hello, {name}!",
+  component: React.createElement("p", null),
+  expressions: {
+    name: "World"
+  },
+  translator: gettext
+});
+
+var multiplePlaceholders = React.createElement(_babelPluginTransformJsxLocalize.Message, {
   format: "{first} {last}",
   component: React.createElement("p", null),
   expressions: {
     first: first_name,
     last: last_name
   },
-  translator: function translator(message) {
-    return gettext(message);
-  }
+  translator: gettext
 });
 
-var element = React.createElement(
-  Message,
+var elements = React.createElement(
+  _babelPluginTransformJsxLocalize.Message,
   {
     format: " Text content should be [1:translated]. [2:] ",
-    translator: function(message) { return gettext(message); },
     component: React.createElement("div", null),
-    expressions: {}
+    expressions: {},
+    translator: gettext
   },
   React.createElement("strong", null),
-  React.createElement("img", { src: "/img/hello.jpg", alt: gettext("Text props should be translated") })
+  React.createElement("img", { src: "/img/hello.jpg", alt: gettext("Text props should be translated")
+  })
 );
 
 var untranslated = React.createElement(

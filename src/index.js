@@ -72,22 +72,6 @@ export default function ({ types: t }) {
     );
   }
 
-  const translator = state => {
-    const arg0 = () => t.identifier("message");
-
-    return t.functionExpression(
-      null, [ arg0() ],
-      t.blockStatement([
-        t.returnStatement(
-          t.callExpression(
-            getTranslator(state),
-            [ arg0() ]
-          )
-        )
-      ])
-    );
-  };
-
   function complexTranslation(path, state) {
     const { node } = path;
 
@@ -113,7 +97,7 @@ export default function ({ types: t }) {
       u.jSXAttribute(c.FORMAT_ATTRIBUTE, format),
       u.jSXAttribute(c.COMPONENT_ATTRIBUTE, newElement),
       u.jSXAttribute(c.EXPRESSIONS_ATTRIBUTE, expressionsObject),
-      u.jSXAttribute(c.TRANSLATOR_ATTRIBUTE, translator(state))
+      u.jSXAttribute(c.TRANSLATOR_ATTRIBUTE, getTranslator(state))
     ];
 
     return path.replaceWith(
