@@ -1,5 +1,5 @@
 {
-  "name": "babel-plugin-transform-jsx-localize",
+  "name": "babel-plugin-transform-jsx-i18n",
   "version": "1.0.0",
   "description": "Localize JSX text as is.",
   "main": "lib/index.js",

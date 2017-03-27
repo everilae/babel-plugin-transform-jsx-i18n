@@ -1,4 +1,4 @@
-# babel-plugin-transform-jsx-localize
+# babel-plugin-transform-jsx-i18n
 
 Localize JSX as is, with very little extra markup.
 
@@ -34,7 +34,7 @@ var untranslated = <div lang="en">
 ### Out
 
 ```javascript
-var _babelPluginTransformJsxLocalize = require("babel-plugin-transform-jsx-localize");
+var _babelPluginTransformJsxI18n = require("babel-plugin-transform-jsx-i18n");
 
 var simple = React.createElement(
   "p",
@@ -42,7 +42,7 @@ var simple = React.createElement(
   gettext("Hello, World!")
 );
 
-var placeholders = React.createElement(_babelPluginTransformJsxLocalize.Message, {
+var placeholders = React.createElement(_babelPluginTransformJsxI18n.Message, {
   format: "Hello, {name}!",
   component: React.createElement("p", null),
   expressions: {
@@ -51,7 +51,7 @@ var placeholders = React.createElement(_babelPluginTransformJsxLocalize.Message,
   translator: gettext
 });
 
-var multiplePlaceholders = React.createElement(_babelPluginTransformJsxLocalize.Message, {
+var multiplePlaceholders = React.createElement(_babelPluginTransformJsxI18n.Message, {
   format: "{first} {last}",
   component: React.createElement("p", null),
   expressions: {
@@ -62,7 +62,7 @@ var multiplePlaceholders = React.createElement(_babelPluginTransformJsxLocalize.
 });
 
 var elements = React.createElement(
-  _babelPluginTransformJsxLocalize.Message,
+  _babelPluginTransformJsxI18n.Message,
   {
     format: " Text content should be [1:translated]. [2:] ",
     component: React.createElement("div", null),
@@ -98,7 +98,7 @@ Without options:
 
 ```json
 {
-  "plugins": ["transform-jsx-localize"]
+  "plugins": ["transform-jsx-i18n"]
 }
 ```
 
@@ -107,7 +107,7 @@ With options:
 ```json
 {
   "plugins": [
-    ["transform-jsx-localize", {
+    ["transform-jsx-i18n", {
       "translator": "myTranslatorFun"
     }]
   ]
