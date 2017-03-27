@@ -3,7 +3,7 @@ import * as u from './utils';
 import * as c from './common';
 import LocalizerError from "./LocalizerError";
 
-const RUNTIME_MODULE_IDENTIFIER = "babel-plugin-transform-jsx-localize";
+const RUNTIME_MODULE_IDENTIFIER = "babel-plugin-transform-jsx-i18n";
 
 const TRANSLATOR_IDENTIFIER = "gettext";
 const MESSAGE_IDENTIFIER = "Message"; 
