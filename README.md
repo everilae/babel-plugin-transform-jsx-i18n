@@ -145,6 +145,8 @@ Early alpha, working features are
 - ~~Improve `Message` format parser and add escaping support. Currently it is
   impossible to output translated text with parameters/markup that would
   contain escaped placeholders as text.~~
+- Add an attribute that overrides message id.
+- Add message domain attribute.
 
 ## Contributors
 
