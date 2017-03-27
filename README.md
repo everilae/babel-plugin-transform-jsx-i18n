@@ -122,6 +122,13 @@ With options:
 
 Replace the function used when translating messages.
 
+### `messageFormatTranslator`
+
+Optional `string`, defaults to `undefined`.
+
+Replace the function used when translating `i18nMsg` tagged messages. Defaults
+to `translator`, if left undefined.
+
 ### `normalizeWhitespace`
 
 `boolean`, defaults to `true`.

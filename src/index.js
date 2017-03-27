@@ -17,11 +17,24 @@ function normalizeWhitespace(state) {
 }
 
 export default function ({ types: t }) {
-  function getTranslator(state) {
-    const identifier = state.opts.translator || TRANSLATOR_IDENTIFIER;
-    return identifier.split(".").
+  function resolveDottedIdentifier(name) {
+    return name.split(".").
       map(name => name === "this" ? t.thisExpression() : t.identifier(name)).
       reduce((obj, prop) => t.memberExpression(obj, prop));
+  }
+
+  function getTranslator(state) {
+    const identifier = state.opts.translator || TRANSLATOR_IDENTIFIER;
+    return resolveDottedIdentifier(identifier);
+  }
+
+  function getFormatTranslator(state) {
+    const identifier = state.opts.messageFormatTranslator;
+    if (identifier != null) {
+      return resolveDottedIdentifier(identifier);
+    } else {
+      return getTranslator(state);
+    }
   }
 
   function translatedText(text, state) {
@@ -97,7 +110,7 @@ export default function ({ types: t }) {
       u.jSXAttribute(c.FORMAT_ATTRIBUTE, format),
       u.jSXAttribute(c.COMPONENT_ATTRIBUTE, newElement),
       u.jSXAttribute(c.EXPRESSIONS_ATTRIBUTE, expressionsObject),
-      u.jSXAttribute(c.TRANSLATOR_ATTRIBUTE, getTranslator(state))
+      u.jSXAttribute(c.TRANSLATOR_ATTRIBUTE, getFormatTranslator(state))
     ];
 
     return path.replaceWith(
