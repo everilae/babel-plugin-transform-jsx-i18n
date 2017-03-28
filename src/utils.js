@@ -64,17 +64,19 @@ export function hasAttribute(node, name) {
   );
 }
 
-export function partitionAttributes(attributes) {
+export function getI18nAttributes(attributes) {
   return attributes.reduce(
     (acc, attr) => {
       if (attr.name.name === c.I18N_MSG_ATTRIBUTE) {
-        acc[0] = attr;
+        acc.msg = attr;
+      } else if (attr.name.name === c.I18N_COMMENT_ATTRIBUTE) {
+        acc.comment = attr;
       } else {
-        acc[1].push(attr);
+        acc.rest.push(attr);
       }
       return acc;
     },
-    [null, []]
+    { msg: null, comment: null, rest: [] }
   );
 }
 

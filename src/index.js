@@ -88,8 +88,10 @@ export default function ({ types: t }) {
   function complexTranslation(path, state) {
     const { node } = path;
 
-    const [ i18nAttribute, filteredAttributes ] =
-      u.partitionAttributes(node.openingElement.attributes);
+    const {
+      msg: i18nAttribute,
+      rest: filteredAttributes
+    } = u.getI18nAttributes(node.openingElement.attributes);
 
     const newElement = u.stripElement(node, filteredAttributes);
 
