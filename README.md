@@ -15,18 +15,14 @@ Babel and React ecosystem, where AST parsing and rewriting is the norm.
 ```javascript
 var simple = <p>Hello, World!</p>;
 
-var placeholders = <p i18nMsg="name">Hello, { "World" }!</p>;
-
-var multiplePlaceholders = <p i18nMsg="first, last">{ first_name } { last_name }</p>
-
-var elements = <div i18nMsg="">
-  Text content should be <strong>translated</strong>.
+var formatted = <div i18nMsg="name">
+  Text content should be <strong>translated</strong>, { name }.
   <img src="/img/hello.jpg" alt="Text props should be translated" />
 </div>;
 
 var untranslated = <div lang="en">
   Text, elements, and attributes in an element with <code>lang</code> attribute
-  shall be untouched. 
+  shall be untouched.
   <img src="/img/hello.jpg" alt="Hello, World!" />
 </div>;
 ```
@@ -34,6 +30,8 @@ var untranslated = <div lang="en">
 ### Out
 
 ```javascript
+"use strict";
+
 var _babelPluginTransformJsxI18n = require("babel-plugin-transform-jsx-i18n");
 
 var simple = React.createElement(
@@ -42,32 +40,14 @@ var simple = React.createElement(
   gettext("Hello, World!")
 );
 
-var placeholders = React.createElement(_babelPluginTransformJsxI18n.Message, {
-  format: "Hello, {name}!",
-  component: React.createElement("p", null),
-  expressions: {
-    name: "World"
-  },
-  translator: gettext
-});
-
-var multiplePlaceholders = React.createElement(_babelPluginTransformJsxI18n.Message, {
-  format: "{first} {last}",
-  component: React.createElement("p", null),
-  expressions: {
-    first: first_name,
-    last: last_name
-  },
-  translator: gettext
-});
-
-var elements = React.createElement(
+var formatted = React.createElement(
   _babelPluginTransformJsxI18n.Message,
   {
-    format: " Text content should be [1:translated]. [2:] ",
+    format: gettext(" Text content should be [1:translated], {name}. [2:] "),
     component: React.createElement("div", null),
-    expressions: {},
-    translator: gettext
+    expressions: {
+      name: name
+    }
   },
   React.createElement("strong", null),
   React.createElement("img", { src: "/img/hello.jpg", alt: gettext("Text props should be translated")

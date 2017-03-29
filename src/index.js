@@ -108,11 +108,15 @@ export default function ({ types: t }) {
       ))
     );
 
+    const translatedFormat = t.callExpression(
+      getFormatTranslator(state),
+      [ t.stringLiteral(format) ]
+    );
+
     const msgAttributes = [
-      u.jSXAttribute(c.FORMAT_ATTRIBUTE, format),
+      u.jSXAttribute(c.FORMAT_ATTRIBUTE, translatedFormat),
       u.jSXAttribute(c.COMPONENT_ATTRIBUTE, newElement),
-      u.jSXAttribute(c.EXPRESSIONS_ATTRIBUTE, expressionsObject),
-      u.jSXAttribute(c.TRANSLATOR_ATTRIBUTE, getFormatTranslator(state))
+      u.jSXAttribute(c.EXPRESSIONS_ATTRIBUTE, expressionsObject)
     ];
 
     return path.replaceWith(
