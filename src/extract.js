@@ -18,7 +18,7 @@ function extractMessages(node) {
     map(child => textToMessage(child.value));
 }
 
-function extractFormat(node) {
+function extractFormat(node, config) {
   const {
     msg: i18nAttribute,
     comment
@@ -26,8 +26,8 @@ function extractFormat(node) {
 
   const placeholders = u.asList(i18nAttribute.value);
 
-  // FIXME: Make whitespace normalization configurable
-  const { format } = u.extract(node, placeholders, true);
+  const { format } = u.extract(
+    node, placeholders, config.normalizeWhitespace);
 
   return { format, comment: comment && comment.value.value };
 }
@@ -48,7 +48,7 @@ function makeMessage(path, message, fileName, comment) {
   return msg;
 }
 
-function jSXElement(path, fileName, catalog) {
+function jSXElement(path, fileName, catalog, config) {
   const { node } = path;
 
   if (u.isBlacklisted(path) || u.hasLang(path)) {
@@ -58,7 +58,7 @@ function jSXElement(path, fileName, catalog) {
 
   try {
     if (u.hasAttribute(node, c.I18N_MSG_ATTRIBUTE)) {
-      const { format, comment } = extractFormat(node);
+      const { format, comment } = extractFormat(node, config);
       catalog[format] = makeMessage(path, format, fileName, comment);
       // This keeps possible children from being processed.
       path.skip();
@@ -77,7 +77,7 @@ function jSXElement(path, fileName, catalog) {
   }
 }
 
-function jSXAttribute(path, fileName, catalog) {
+function jSXAttribute(path, fileName, catalog, config) {
   const { node } = path;
   if (!u.hasLang(path) && u.isTranslatableAttribute(node)) {
     const msg = textToMessage(node.value.value);
@@ -85,26 +85,28 @@ function jSXAttribute(path, fileName, catalog) {
   }
 }
 
-function visitor(fileName, catalog) {
+function visitor(fileName, catalog, config) {
   return {
     enter(path) {
       if (path.isJSXElement()) {
-        jSXElement(path, fileName, catalog);
+        jSXElement(path, fileName, catalog, config);
       } else if (path.isJSXAttribute()) {
-        jSXAttribute(path, fileName, catalog);
+        jSXAttribute(path, fileName, catalog, config);
       }
     }
   };
 }
 
-function parseAndExtract([ fileName, source ]) {
-  const ast = babylon.parse(source, {
-    sourceType: "module",
-    plugins: [ "jsx" ]
-  });
-  let catalog = {}
-  traverse(ast, visitor(fileName, catalog));
-  return catalog;
+function parseAndExtract(config) {
+  return function([ fileName, source ]) {
+    const ast = babylon.parse(source, {
+      sourceType: "module",
+      plugins: [ "jsx" ]
+    });
+    let catalog = {}
+    traverse(ast, visitor(fileName, catalog, config));
+    return catalog;
+  };
 }
 
 function makeTranslationObject(catalog) {
@@ -119,7 +121,7 @@ function makeTranslationObject(catalog) {
   };
 }
 
-function main(encoding="utf-8") {
+function main(config, encoding="utf-8") {
   const readFile = u.promisify(fs.readFile);
   const fileNames = process.argv.slice(
     process.argv[0].endsWith("node") ? 2 : 1);
@@ -130,7 +132,7 @@ function main(encoding="utf-8") {
 
   Promise.all(sources).
     then(sources => {
-      const catalogs = sources.map(parseAndExtract);
+      const catalogs = sources.map(parseAndExtract(config));
       const catalog = Object.assign(...catalogs);
       const translationObj = makeTranslationObject(catalog);
       const po = gettextParser.po.compile(translationObj);
@@ -139,6 +141,33 @@ function main(encoding="utf-8") {
     });
 }
 
+const defaultConfig = {
+  normalizeWhitespace: true
+};
+
+function readConfig() {
+  const plugins =
+    process.env.npm_package_babel &&
+    process.env.npm_package_babel.plugins || [];
+
+  let config = defaultConfig;
+
+  for (const plugin of plugins) {
+    if (!Array.isArray(plugin)) {
+      continue;
+    }
+
+    const [name, conf] = plugin;
+
+    if (name === "transform-jsx-i18n") {
+      config = conf;
+      break;
+    }
+  }
+
+  return config;
+}
+
 if (require.main === module) {
-  main();
+  main(readConfig());
 }
