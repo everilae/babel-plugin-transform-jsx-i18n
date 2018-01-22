@@ -1,4 +1,4 @@
-#!//usr/bin/env node
+#!/usr/bin/env node
 import traverse from "babel-traverse";
 import * as babylon from "babylon";
 import * as t from "babel-types";

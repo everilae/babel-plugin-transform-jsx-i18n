@@ -3,13 +3,11 @@ import * as u from './utils';
 import * as c from './common';
 import LocalizerError from "./LocalizerError";
 
-const RUNTIME_MODULE_IDENTIFIER = "babel-plugin-transform-jsx-i18n";
+const RUNTIME_MODULE_IDENTIFIER = "jsx-i18n-message";
 
 const TRANSLATOR_IDENTIFIER = "gettext";
 const MESSAGE_IDENTIFIER = "Message"; 
 const LOCAL_MESSAGE_IDENTIFIER_KEY = "localMessageIdentifier";
-
-export { default as Message } from './Message';
 
 function normalizeWhitespace(state) {
   const normWs = state.opts.normalizeWhitespace;
