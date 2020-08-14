@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "babel src -d lib",
+    "prepack": "\"$npm_execpath\" run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Ilja Everilä",
