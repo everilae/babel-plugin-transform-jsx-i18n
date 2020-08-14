@@ -1,4 +1,4 @@
-import * as t from "babel-types";
+import * as t from "@babel/types";
 import * as c from "./common";
 import LocalizerError from "./LocalizerError";
 

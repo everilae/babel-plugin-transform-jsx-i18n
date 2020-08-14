@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-import traverse from "babel-traverse";
-import * as babylon from "babylon";
-import * as t from "babel-types";
+import traverse from "@babel/traverse";
+import * as babylon from "@babel/parser";
+import * as t from "@babel/types";
 import * as fs from "fs";
 import * as u from "./utils";
 import * as c from "./common";

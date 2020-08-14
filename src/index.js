@@ -1,4 +1,4 @@
-import jsx from "babel-plugin-syntax-jsx";
+import jsx from "@babel/plugin-syntax-jsx";
 import * as u from './utils';
 import * as c from './common';
 import LocalizerError from "./LocalizerError";
@@ -6,7 +6,7 @@ import LocalizerError from "./LocalizerError";
 const RUNTIME_MODULE_IDENTIFIER = "jsx-i18n-message";
 
 const TRANSLATOR_IDENTIFIER = "gettext";
-const MESSAGE_IDENTIFIER = "Message"; 
+const MESSAGE_IDENTIFIER = "Message";
 const LOCAL_MESSAGE_IDENTIFIER_KEY = "localMessageIdentifier";
 
 function normalizeWhitespace(state) {

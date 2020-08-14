@@ -3,34 +3,35 @@
   "version": "1.0.0",
   "description": "Localize JSX text as is.",
   "main": "lib/index.js",
+  "jsnext:main": "src/index.js",
   "bin": {
     "extract-messages": "./lib/extract.js"
   },
   "scripts": {
     "build": "babel src -d lib",
-    "prepack": "\"$npm_execpath\" run build",
+    "prepare": "\"$npm_execpath\" run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "files": ["lib"],
+  "files": [
+    "lib"
+  ],
   "author": "Ilja Everilä",
   "license": "ISC",
   "dependencies": {
+    "@babel/plugin-syntax-jsx": "^7.8.3",
     "gettext-parser": "^1.2.2"
   },
+  "peerDependencies": {
+    "@babel/core": "^7.9.0"
+  },
   "devDependencies": {
-    "babel-cli": "^6.24.0",
-    "babel-core": "^6.24.0",
-    "babel-preset-env": "^1.6.1",
-    "babel-preset-react": "^6.24.0"
+    "@babel/cli": "^7.9.0",
+    "@babel/core": "^7.9.0",
+    "@babel/preset-env": "^7.11.0"
   },
   "babel": {
     "presets": [
-      "react",
-      ["env", {
-        "targets": {
-          "node": "current"
-        }
-      }]
+      "@babel/preset-env"
     ]
   }
 }
