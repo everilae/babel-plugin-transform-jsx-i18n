@@ -119,7 +119,7 @@ function extract(node, placeholders, normalizeWs, elements, expressions) {
 
   for (const child of node.children) {
     if (t.isJSXText(child)) {
-      format += child.value.replace(/([[\]])/g, "\\$1");
+      format += child.value.replace(/([[\]\\])/g, "\\$1");
     }
     else if (t.isJSXElement(child)) {
       const idx = elements.length + 1;
