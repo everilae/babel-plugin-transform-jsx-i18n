@@ -11,7 +11,7 @@ import * as gettextParser from "gettext-parser";
 import transformJsxI18n from ".";
 
 function textToMessage(text) {
-  return text.trim().replace(/\s+/g, " ");
+  return u.getMessageId(text).messageId;
 }
 
 function extractMessages(node) {
@@ -28,7 +28,7 @@ function extractFormat(node, config) {
 
   const placeholders = u.asList(i18nAttribute.value);
 
-  const { format } = u.extract(
+  const { format } = u.extractMessage(
     node, placeholders, config.normalizeWhitespace);
 
   return { format, comment: comment && comment.value.value };

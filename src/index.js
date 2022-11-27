@@ -36,14 +36,11 @@ export default function ({ types: t }) {
   }
 
   function translatedText(text, state) {
-    let [ , leadingWs, messageId, trailingWs ] =
-      /^(\s*)((?:.|\s)+?)(\s*)$/.exec(text);
-
-    if (normalizeWhitespace(state)) {
-      leadingWs = leadingWs && " ";
-      trailingWs = trailingWs && " ";
-      messageId = messageId.replace(/\s+/g, " ");
-    }
+    const {
+      leadingWs,
+      messageId,
+      trailingWs
+    } = u.getMessageId(text, normalizeWhitespace(state));
 
     const translation = t.callExpression(
       getTranslator(state),
@@ -97,8 +94,13 @@ export default function ({ types: t }) {
 
     const placeholders = u.asList(i18nAttribute.value);
 
-    const { format, elements: newChildren, expressions } =
-      u.extract(node, placeholders, normalizeWhitespace(state));
+    const {
+      format,
+      leadingWs,
+      trailingWs,
+      elements: newChildren,
+      expressions
+    } = u.extractMessage(node, placeholders, normalizeWhitespace(state));
 
     const expressionsObject = t.objectExpression(
       placeholders.map((p, i) => t.objectProperty(
@@ -111,8 +113,16 @@ export default function ({ types: t }) {
       [ t.stringLiteral(format) ]
     );
 
+    const translatedFormatWithWs = leadingWs || trailingWs
+      ? u.add(
+          t.stringLiteral(leadingWs),
+          translatedFormat,
+          t.stringLiteral(trailingWs)
+        )
+      : translatedFormat;
+
     const msgAttributes = [
-      u.jSXAttribute(c.FORMAT_ATTRIBUTE, translatedFormat),
+      u.jSXAttribute(c.FORMAT_ATTRIBUTE, translatedFormatWithWs),
       u.jSXAttribute(c.COMPONENT_ATTRIBUTE, newElement),
       u.jSXAttribute(c.EXPRESSIONS_ATTRIBUTE, expressionsObject)
     ];

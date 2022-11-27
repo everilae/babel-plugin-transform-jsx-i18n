@@ -101,7 +101,20 @@ export function stripElement(node, attributes=null) {
   );
 }
 
-export function extract(node, placeholders, normalizeWs, elements=[], expressions=[]) {
+export function getMessageId(text, normalizeWs) {
+  let [ , leadingWs, messageId, trailingWs ] =
+    /^(\s*)((?:.|\s)+?)(\s*)$/.exec(text);
+
+  if (normalizeWs) {
+    leadingWs = leadingWs && " ";
+    trailingWs = trailingWs && " ";
+    messageId = messageId.replace(/\s+/g, " ");
+  }
+
+  return { leadingWs, messageId, trailingWs }
+}
+
+function extract(node, placeholders, normalizeWs, elements, expressions) {
   let format = "";
 
   for (const child of node.children) {
@@ -122,13 +135,24 @@ export function extract(node, placeholders, normalizeWs, elements=[], expression
     }
   }
 
-  // Normalize whitespace.
-  // FIXME: Will cause trouble in <pre>, fix later.
-  if (normalizeWs) {
-    format = format.replace(/\s+/g, " ");
-  }
-
   return { format, elements, expressions };
+}
+
+export function extractMessage(node, placeholders, normalizeWs) {
+  const { format, elements, expressions } =
+    extract(node, placeholders, normalizeWs, [], []);
+
+  // FIXME: Will cause trouble in <pre>, fix later.
+  const { leadingWs, messageId, trailingWs } =
+    getMessageId(format, normalizeWs);
+
+  return {
+    format: messageId,
+    leadingWs,
+    trailingWs,
+    elements,
+    expressions
+  };
 }
 
 export function asList(node, path) {

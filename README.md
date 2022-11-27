@@ -32,7 +32,7 @@ var untranslated = <div lang="en">
 ```javascript
 "use strict";
 
-var _babelPluginTransformJsxI18n = require("babel-plugin-transform-jsx-i18n");
+var _jsxI18nMessage = require("jsx-i18n-message");
 
 var simple = React.createElement(
   "p",
@@ -41,9 +41,9 @@ var simple = React.createElement(
 );
 
 var formatted = React.createElement(
-  _babelPluginTransformJsxI18n.Message,
+  _jsxI18nMessage.Message,
   {
-    format: gettext(" Text content should be [1:translated], {name}. [2:] "),
+    format: " " + gettext("Text content should be [1:translated], {name}. [2:]") + " ",
     component: React.createElement("div", null),
     expressions: {
       name: name
