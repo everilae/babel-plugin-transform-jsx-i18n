@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 import traverse from "@babel/traverse";
-import * as babylon from "@babel/parser";
+import * as parser from "@babel/parser";
+import * as babel from "@babel/core";
 import * as t from "@babel/types";
 import * as fs from "fs";
 import * as u from "./utils";
 import * as c from "./common";
 import LocalizerError from "./LocalizerError";
 import * as gettextParser from "gettext-parser";
+import transformJsxI18n from ".";
 
 function textToMessage(text) {
   return text.trim().replace(/\s+/g, " ");
@@ -32,12 +34,12 @@ function extractFormat(node, config) {
   return { format, comment: comment && comment.value.value };
 }
 
-function makeMessage(path, message, fileName, comment) {
+function makeMessage(path, message, filename, comment) {
   let msg = {
     msgid: message,
     msgstr: [],
     comments: {
-      reference: `${fileName}:${path.node.loc.start.line}`
+      reference: `${filename}:${path.node.loc.start.line}`
     }
   }
 
@@ -48,7 +50,7 @@ function makeMessage(path, message, fileName, comment) {
   return msg;
 }
 
-function jSXElement(path, fileName, catalog, config) {
+function jSXElement(path, filename, catalog, config) {
   const { node } = path;
 
   if (u.isBlacklisted(path) || u.hasLang(path)) {
@@ -59,13 +61,13 @@ function jSXElement(path, fileName, catalog, config) {
   try {
     if (u.hasAttribute(node, c.I18N_MSG_ATTRIBUTE)) {
       const { format, comment } = extractFormat(node, config);
-      catalog[format] = makeMessage(path, format, fileName, comment);
+      catalog[format] = makeMessage(path, format, filename, comment);
       // This keeps possible children from being processed.
       path.skip();
     }
     else if (u.hasTranslatableText(node)) {
       extractMessages(node).
-        forEach(msg => catalog[msg] = makeMessage(path, msg, fileName));
+        forEach(msg => catalog[msg] = makeMessage(path, msg, filename));
     }
   } catch (error) {
     if (error instanceof LocalizerError) {
@@ -77,36 +79,35 @@ function jSXElement(path, fileName, catalog, config) {
   }
 }
 
-function jSXAttribute(path, fileName, catalog, config) {
+function jSXAttribute(path, filename, catalog, config) {
   const { node } = path;
   if (!u.hasLang(path) && u.isTranslatableAttribute(node)) {
     const msg = textToMessage(node.value.value);
-    catalog[msg] = makeMessage(path, msg, fileName);
+    catalog[msg] = makeMessage(path, msg, filename);
   }
 }
 
-function visitor(fileName, catalog, config) {
+function visitor(filename, catalog, config) {
   return {
     enter(path) {
       if (path.isJSXElement()) {
-        jSXElement(path, fileName, catalog, config);
+        jSXElement(path, filename, catalog, config);
       } else if (path.isJSXAttribute()) {
-        jSXAttribute(path, fileName, catalog, config);
+        jSXAttribute(path, filename, catalog, config);
       }
     }
   };
 }
 
-function parseAndExtract(config) {
-  return function([ fileName, source ]) {
-    const ast = babylon.parse(source, {
-      sourceType: "module",
-      plugins: [ "jsx" ]
-    });
-    let catalog = {}
-    traverse(ast, visitor(fileName, catalog, config));
-    return catalog;
-  };
+function parseAndExtract([ filename, source ]) {
+  const config = readConfig(filename);
+  const ast = parser.parse(source, {
+    sourceType: "module",
+    plugins: [ "jsx" ]
+  });
+  let catalog = {}
+  traverse(ast, visitor(filename, catalog, config));
+  return catalog;
 }
 
 function makeTranslationObject(catalog) {
@@ -121,18 +122,18 @@ function makeTranslationObject(catalog) {
   };
 }
 
-function main(config, encoding="utf-8") {
+function main(encoding="utf-8") {
   const readFile = u.promisify(fs.readFile);
-  const fileNames = process.argv.slice(
+  const filenames = process.argv.slice(
     process.argv[0].endsWith("node") ? 2 : 1);
 
-  let sources = fileNames.
-    map(fileName => readFile(fileName, encoding).
-      then(source => [fileName, source]));
+  let sources = filenames.
+    map(filename => readFile(filename, encoding).
+      then(source => [filename, source]));
 
   Promise.all(sources).
     then(sources => {
-      const catalogs = sources.map(parseAndExtract(config));
+      const catalogs = sources.map(parseAndExtract);
       const catalog = Object.assign(...catalogs);
       const translationObj = makeTranslationObject(catalog);
       const po = gettextParser.po.compile(translationObj);
@@ -145,29 +146,23 @@ const defaultConfig = {
   normalizeWhitespace: true
 };
 
-function readConfig() {
-  const plugins =
-    process.env.npm_package_babel &&
-    process.env.npm_package_babel.plugins || [];
+function readConfig(filename) {
+  const { options: { plugins } } = babel.loadPartialConfig({
+    filename
+  });
 
-  let config = defaultConfig;
+  let options;
 
   for (const plugin of plugins) {
-    if (!Array.isArray(plugin)) {
-      continue;
-    }
-
-    const [name, conf] = plugin;
-
-    if (name === "transform-jsx-i18n") {
-      config = conf;
+    if (plugin.value === transformJsxI18n) {
+      options = plugin.options;
       break;
     }
   }
 
-  return config;
+  return Object.assign({}, defaultConfig, options);
 }
 
 if (require.main === module) {
-  main(readConfig());
+  main();
 }
