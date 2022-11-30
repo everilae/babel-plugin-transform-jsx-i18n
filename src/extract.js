@@ -50,52 +50,51 @@ function makeMessage(path, message, filename, comment) {
   return msg;
 }
 
-function jSXElement(path, filename, catalog, config) {
-  const { node } = path;
+function visitJSXElement(filename, catalog, config) {
+  return path => {
+    const { node } = path;
 
-  if (u.isBlacklisted(path) || u.hasLang(path)) {
-    path.skip();
-    return;
-  }
-
-  try {
-    if (u.hasAttribute(node, c.I18N_MSG_ATTRIBUTE)) {
-      const { format, comment } = extractFormat(node, config);
-      catalog[format] = makeMessage(path, format, filename, comment);
-      // This keeps possible children from being processed.
+    if (u.isBlacklisted(path) || u.hasLang(path)) {
       path.skip();
+      return;
     }
-    else if (u.hasTranslatableText(node)) {
-      extractMessages(node).
-        forEach(msg => catalog[msg] = makeMessage(path, msg, filename));
+
+    try {
+      if (u.hasAttribute(node, c.I18N_MSG_ATTRIBUTE)) {
+        const { format, comment } = extractFormat(node, config);
+        catalog[format] = makeMessage(path, format, filename, comment);
+        // This keeps possible children from being processed.
+        path.skip();
+      }
+      else if (u.hasTranslatableText(node)) {
+        extractMessages(node).
+          forEach(msg => catalog[msg] = makeMessage(path, msg, filename));
+      }
+    } catch (error) {
+      if (error instanceof LocalizerError) {
+        throw path.buildCodeFrameError(error.message);
+      } else {
+        // Rethrow
+        throw error;
+      }
     }
-  } catch (error) {
-    if (error instanceof LocalizerError) {
-      throw path.buildCodeFrameError(error.message);
-    } else {
-      // Rethrow
-      throw error;
-    }
-  }
+  };
 }
 
-function jSXAttribute(path, filename, catalog, config) {
-  const { node } = path;
-  if (!u.hasLang(path) && u.isTranslatableAttribute(node)) {
-    const msg = textToMessage(node.value.value);
-    catalog[msg] = makeMessage(path, msg, filename);
-  }
+function visitJSXAttribute(filename, catalog, config) {
+  return path => {
+    const { node } = path;
+    if (!u.hasLang(path) && u.isTranslatableAttribute(node)) {
+      const msg = textToMessage(node.value.value);
+      catalog[msg] = makeMessage(path, msg, filename);
+    }
+  };
 }
 
 function visitor(filename, catalog, config) {
   return {
-    enter(path) {
-      if (path.isJSXElement()) {
-        jSXElement(path, filename, catalog, config);
-      } else if (path.isJSXAttribute()) {
-        jSXAttribute(path, filename, catalog, config);
-      }
-    }
+    JSXElement: visitJSXElement(filename, catalog, config),
+    JSXAttribute: visitJSXAttribute(filename, catalog, config)
   };
 }
 
