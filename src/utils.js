@@ -167,6 +167,22 @@ export function asList(node, path) {
   }
 }
 
+export function equalsDottedIdentifier(node, dottedIdentifier) {
+  for (const name of dottedIdentifier.split(".").reverse()) {
+    const isThisOrEqualsName = name === "this"
+      ? t.isThisExpression
+      : n => t.isIdentifier(n) && n.name === name;
+    const { object, property } = t.isMemberExpression(node)
+      ? node
+      : { object: undefined, property: node };
+    if (!isThisOrEqualsName(property)) {
+      return false;
+    }
+    node = object;
+  }
+  return !node;
+}
+
 export function jSXAttribute(identifier, value) {
   return t.jSXAttribute(
     t.jSXIdentifier(identifier),

@@ -91,10 +91,22 @@ function visitJSXAttribute(filename, catalog, config) {
   };
 }
 
+function visitCallExpression(filename, catalog, config) {
+  return path => {
+    const { node } = path;
+    if (u.equalsDottedIdentifier(node.callee, config.translator)) {
+      t.assertStringLiteral(node.arguments[0]);
+      const msg = node.arguments[0].value;
+      catalog[msg] = makeMessage(path, msg, filename);
+    }
+  };
+}
+
 function visitor(filename, catalog, config) {
   return {
     JSXElement: visitJSXElement(filename, catalog, config),
-    JSXAttribute: visitJSXAttribute(filename, catalog, config)
+    JSXAttribute: visitJSXAttribute(filename, catalog, config),
+    CallExpression: visitCallExpression(filename, catalog, config)
   };
 }
 
@@ -142,7 +154,8 @@ function main(encoding="utf-8") {
 }
 
 const defaultConfig = {
-  normalizeWhitespace: true
+  translator: c.TRANSLATOR_IDENTIFIER_DEFAULT,
+  normalizeWhitespace: c.NORMALIZE_WHITESPACE_DEFAULT
 };
 
 function readConfig(filename) {

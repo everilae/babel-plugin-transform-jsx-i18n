@@ -5,6 +5,8 @@ export const COMPONENT_ATTRIBUTE = "component";
 export const EXPRESSIONS_ATTRIBUTE = "expressions";
 export const TRANSLATOR_ATTRIBUTE = "translator";
 export const LANG_ATTRIBUTE = "lang";
+export const TRANSLATOR_IDENTIFIER_DEFAULT = "gettext";
+export const NORMALIZE_WHITESPACE_DEFAULT = true;
 
 export const TRANSLATABLE_ATTRIBUTES = [
   "alt",

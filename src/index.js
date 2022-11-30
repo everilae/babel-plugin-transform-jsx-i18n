@@ -5,13 +5,12 @@ import LocalizerError from "./LocalizerError";
 
 const RUNTIME_MODULE_IDENTIFIER = "jsx-i18n-message";
 
-const TRANSLATOR_IDENTIFIER = "gettext";
 const MESSAGE_IDENTIFIER = "Message";
 const LOCAL_MESSAGE_IDENTIFIER_KEY = "localMessageIdentifier";
 
 function normalizeWhitespace(state) {
   const normWs = state.opts.normalizeWhitespace;
-  return normWs != null ? normWs : true;
+  return normWs != null ? normWs : c.NORMALIZE_WHITESPACE_DEFAULT;
 }
 
 export default function ({ types: t }) {
@@ -22,7 +21,7 @@ export default function ({ types: t }) {
   }
 
   function getTranslator(state) {
-    const identifier = state.opts.translator || TRANSLATOR_IDENTIFIER;
+    const identifier = state.opts.translator || c.TRANSLATOR_IDENTIFIER_DEFAULT;
     return resolveDottedIdentifier(identifier);
   }
 
